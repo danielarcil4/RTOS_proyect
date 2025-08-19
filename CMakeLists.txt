@@ -35,7 +35,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(OwnRTOS OwnRTOS.c Src/led.c Src/uart.c RP2xxx.c)
+add_executable(OwnRTOS OwnRTOS.c Src/led.c Src/uart.c Src/timeBase.c RP2xxx.c)
 
 pico_set_program_name(OwnRTOS "OwnRTOS")
 pico_set_program_version(OwnRTOS "0.1")

@@ -7,9 +7,11 @@
 #define SIO_BASE        0xd0000000
 #define GPIO_OUT_OFFSET 0x00000010
 #define GPIO_OE_OFFSET  0X00000020
+#define SIO_GPIO_OUT_XOR_OFFSET 0x0000001C 
 
-#define GPIO_OE  ( (volatile uint32_t *) (SIO_BASE + GPIO_OE_OFFSET) )
-#define GPIO_OUT ( (volatile uint32_t *) (SIO_BASE + GPIO_OUT_OFFSET) )
+#define GPIO_OE               ( *(volatile uint32_t *) (SIO_BASE + GPIO_OE_OFFSET) )
+#define GPIO_OUT              ( *(volatile uint32_t *) (SIO_BASE + GPIO_OUT_OFFSET) )
+#define SIO_GPIO_OUT_XOR_CTRL ( *(volatile uint32_t *)  (SIO_BASE + SIO_GPIO_OUT_XOR_OFFSET))
 
 /*                       IO_BANK SETION                                    */
 #define IO_BANK0_BASE  0x40014000
@@ -182,56 +184,11 @@ typedef union{
 #define mUARTFR_RI       (1U << 8)
 #define mUARTFR_RESET    0x00000000U
 
-
-
 /*                                    CLOCKS SECTION                                              */
 #define CLOCKS_BASE 0x40008000
-#define CLK_REF_CTRL_OFFSET  0x00000030
-#define CLK_REF_DIV_OFFSET   0x00000034
-#define CLK_SYS_CTRL_OFFSET  0x0000003c
 #define CLK_PERI_CTRL_OFFSET 0x00000048
 
-#define CLK_REF_CTRL ( (volatile CLK_REF_CTRL_TYPE *) (CLOCKS_BASE + CLK_REF_CTRL_OFFSET) )
-#define CLK_REF_DIV  ( (volatile CLK_REF_DIV_TYPE *) (CLOCKS_BASE + CLK_REF_DIV_OFFSET) )
-#define CLK_SYS_CTRL ( (volatile CLK_SYS_CTRL_TYPE *) (CLOCKS_BASE + CLK_SYS_CTRL_OFFSET) )
 #define CLK_PERI_CTRL ( (volatile CLK_PERI_CTRL_TYPE *) (CLOCKS_BASE + CLK_PERI_CTRL_OFFSET) )
-
-typedef union {
-    uint32_t WORD;
-    struct {
-        uint32_t SRC     : 2; // Clock source selection
-        uint32_t         : 3; // Reserved bits
-        uint32_t AUXSRC  : 2; // AUX clock source selection
-        uint32_t         : 25; // Reserved bit
-    } BITS;
-} CLK_REF_CTRL_TYPE;
-
-#define mCLK_REF_CTRL_SRC_ROSC_CLKSRC_PH     0x00000000U // Clock source is the ROSC clock
-#define mCLK_REF_CTRL_SRC_CLKSRC_CLK_REF_AUX 0x01U // Clock source is the AUX clock
-#define mCLK_REF_CTRL_SRC_CLKSRC_XOSC_CLKSRC 0x02U // Clock source is the XOSC clock
-
-typedef union {
-    uint32_t WORD;
-    struct {
-        uint32_t        : 8; // Reserved bits
-        uint32_t DIVINT : 2; // Integer part of the clock divisor
-        uint32_t        : 22; // Reserved bits
-    } BITS;
-} CLK_REF_DIV_TYPE;
-
-#define mCLK_REF_DIV_DIVINT ( 1 << 8 ) // CLK REF Divisor = 1
-
-typedef union {
-    uint32_t WORD;
-    struct {
-        uint32_t SRC     : 1; // Clock source selection
-        uint32_t         : 4; // Reserved bits
-        uint32_t AUXSRC  : 3; // AUX clock source selection
-        uint32_t         : 24; // Reserved bit
-    } BITS;
-} CLK_SYS_CTRL_TYPE;
-
-#define mCLK_SYS_CTRL_SRC_CLK_REF     0x00000000U // Clock source is the CLK_REF clock
 
 typedef union {
     uint32_t WORD;
@@ -256,122 +213,6 @@ typedef union {
 #define mCLK_PERI_CTRL_ENABLE                       (1U << 11) // Clock enable
 #define mCLK_PERI_CTRL_RESET                        0x00000000U // Reset value for the clock control register
 
-/*                                    CLK_XOSC SECTION                                          */
-#define CLK_XOSC_BASE 0x40024000
-#define CLK_XOSC_CTRL_OFFSET 0x00000000
-#define CLK_XOSC_STATUS_OFFSET 0x00000004
-#define CLK_XOSC_STARTUP_OFFSET 0x0000000c
 
-#define CLK_XOSC_CTRL ( (volatile CLK_XOSC_CTRL_TYPE *) (CLK_XOSC_BASE + CLK_XOSC_CTRL_OFFSET) )
-#define CLK_XOSC_STATUS ( (volatile CLK_XOSC_STATUS_TYPE *) (CLK_XOSC_BASE + CLK_XOSC_STATUS_OFFSET) )
-#define CLK_XOSC_STARTUP ( (volatile CLK_XOSC_STARTUP_TYPE *) (CLK_XOSC_BASE + CLK_XOSC_STARTUP_OFFSET) )
-
-typedef union {
-    uint32_t WORD;
-    struct {
-        uint32_t FREQ_RANGE : 12; // Frequency range select
-        uint32_t EN         : 12; // Enable the XOSC
-        uint32_t            : 8; // Reserved bits
-    } BITS;
-} CLK_XOSC_CTRL_TYPE;
-
-#define kCLK_XOSC_CTRL_FREQ_RANGE_1_15MHZ 0x00000aa0U // Frequency range 1-15 MHz
-#define kCLK_XOSC_CTRL_DISENABLE          0x00d1e000U // Disable the XOSC
-#define kCLK_XOSC_CTRL_ENABLE             0x00fab000U // Enable  the XOSC
-
-typedef union {
-    uint32_t WORD;
-    struct {
-        uint32_t FREQ_RANGE : 2; // Frequency range select
-        uint32_t            : 10; // Reserved bits
-        uint32_t EN         : 1; // Enable the XOSC
-        uint32_t            : 11; // Reserved bits
-        uint32_t BADWRITE   : 1; // Bad write flag
-        uint32_t            : 6; // Reserved bits
-        uint32_t STABLE     : 1; // XOSC ready flag
-    } BITS;
-} CLK_XOSC_STATUS_TYPE;
-
-#define mCLK_XOSC_STATUS_EN              (1U << 31) // XOSC enabled
-
-typedef union {
-    uint32_t WORD;
-    struct {
-        uint32_t DELAY     : 14; // Startup delay for the XOSC
-        uint32_t           :  6; // Reserved bits
-        uint32_t X4        :  1; // Enable X4 mode
-        uint32_t           : 11; // Reserved bits
-    } BITS;
-} CLK_XOSC_STARTUP_TYPE;
-
-#define kCLK_XOSC_STARTUP_DELAY_0_5MS 0x000000c4U // Startup delay of 0.5 ms
-
-/*                                    RESETS SECTION                                            */
-
-#define RESETS_BASE         0x4000C000
-#define RESETS_OFFSET       0x00000000
-#define RESETS_DONE_OFFSET  0x00000008
-
-#define RESETS_CTRL ( (volatile RESETS_TYPE *) (RESETS_BASE + RESETS_OFFSET) )
-#define RESETS_DONE ( (volatile RESETS_TYPE *) (RESETS_BASE + RESETS_DONE_OFFSET) )
-
-typedef union {
-    uint32_t WORD;
-    struct {
-        uint32_t ADC        : 1; // ADC reset
-        uint32_t BUSCTRL    : 1; // BUSCTRL reset
-        uint32_t DMA        : 1; // DMA reset
-        uint32_t I2C0       : 1; // I2C0 reset
-        uint32_t I2C1       : 1; // I2C1 reset
-        uint32_t IO_BANK0   : 1; // IO_BANK0 reset
-        uint32_t IO_QSPI    : 1; // IO_QSPI reset
-        uint32_t JTAG       : 1; // JTAG reset
-        uint32_t PADS_BANK0 : 1; // PADS_BANK0 reset
-        uint32_t PADS_QSPI  : 1; // PADS_QSPI reset
-        uint32_t PIO0       : 1; // PIO0 reset
-        uint32_t PIO1       : 1; // PIO1 reset
-        uint32_t PLL_SYS    : 1; // PLL_SYS reset
-        uint32_t PLL_USB    : 1; // PLL_USB reset
-        uint32_t PWM        : 1; // PWM reset
-        uint32_t RTC        : 1; // RTC reset
-        uint32_t SPI0       : 1; // SPI0 reset
-        uint32_t SPI1       : 1; // SPI1 reset
-        uint32_t SYSCFG     : 1; // SYSCFG reset
-        uint32_t SYSINFO    : 1; // SYSINFO reset
-        uint32_t TBMAN      : 1; // TBMAN reset
-        uint32_t TIMER      : 1; // TIMER reset
-        uint32_t UART0      : 1; // UART0 reset
-        uint32_t UART1      : 1; // UART1 reset
-        uint32_t USBCTRL    : 1; // USBCTRL reset
-        uint32_t            : 7; // Reserved bits
-    } BITS;
-} RESETS_TYPE;
-
-#define mRESETS_RESET_ADC        (1U << 0)
-#define mRESETS_RESET_BUSCTRL    (1U << 1)
-#define mRESETS_RESET_DMA        (1U << 2)
-#define mRESETS_RESET_I2C0       (1U << 3)
-#define mRESETS_RESET_I2C1       (1U << 4)
-#define mRESETS_RESET_IO_BANK0   (1U << 5)
-#define mRESETS_RESET_IO_QSPI    (1U << 6)
-#define mRESETS_RESET_JTAG       (1U << 7)
-#define mRESETS_RESET_PADS_BANK0 (1U << 8)
-#define mRESETS_RESET_PADS_QSPI  (1U << 9)
-#define mRESETS_RESET_PIO0       (1U << 10)
-#define mRESETS_RESET_PIO1       (1U << 11)
-#define mRESETS_RESET_PLL_SYS    (1U << 12)
-#define mRESETS_RESET_PLL_USB    (1U << 13)
-#define mRESETS_RESET_PWM        (1U << 14)
-#define mRESETS_RESET_RTC        (1U << 15)
-#define mRESETS_RESET_SPI0       (1U << 16)
-#define mRESETS_RESET_SPI1       (1U << 17)
-#define mRESETS_RESET_SYSCFG     (1U << 18)
-#define mRESETS_RESET_SYSINFO    (1U << 19)
-#define mRESETS_RESET_TBMAN      (1U << 20)
-#define mRESETS_RESET_TIMER      (1U << 21)
-#define mRESETS_RESET_UART0      (1U << 22)
-#define mRESETS_RESET_UART1      (1U << 23)
-#define mRESETS_RESET_USBCTRL    (1U << 24)
-#define mRESETS_RESET_RESET      0xFFFFFFFFU // Reset value for the reset control register
 
 #endif // __STM32F411xE_H__
