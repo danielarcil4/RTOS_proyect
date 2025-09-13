@@ -2,7 +2,6 @@
 #define __TIMEBASE_H__
 #include <stdint.h>
 
-void init_timebase(void);
-void test(void);
+void init_timebase(uint32_t quanta);
 
 #endif // "__TIMEBASE_H__"
